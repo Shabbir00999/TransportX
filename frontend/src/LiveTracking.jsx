@@ -43,9 +43,8 @@ export default function LiveTracking()
   // Fetch bus data from the backend
   async function loadBuses() {
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/buses"
-      );
+      const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const response = await fetch(`${API}/buses`);
 
       if (!response.ok) {
         throw new Error("Could not load buses");
