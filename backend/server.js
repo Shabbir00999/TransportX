@@ -1,10 +1,24 @@
+require("dotenv").config();
+require("node:dns").setServers(["8.8.8.8", "1.1.1.1"]);
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
+const Bus = require("./bus");
+
 
 const app = express();
 
 const PORT = 5000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log("MongoDB connected successfully!");
+    seedBuses();
+  })
+  .catch((error) => {
+    console.error("MongoDB connection failed:", error.message);
+  });
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -35,7 +49,7 @@ const buses = [
     name: "City Connector",
     route: "Miyapur → Main Campus",
     driver: "Suresh Rao",
-    occupancy: 42,
+    occupancy: 40,
     capacity: 50,
     eta: 12,
     status: "On Route",
@@ -57,7 +71,20 @@ const buses = [
     lng: 78.4138
   }
 ];
+async function seedBuses() {
+  try {
+    const count = await Bus.countDocuments();
 
+    if (count === 0) {
+      await Bus.insertMany(buses);
+      console.log("Three bus records saved to MongoDB!");
+    } else {
+      console.log("Bus records already exist in MongoDB.");
+    }
+  } catch (error) {
+    console.error("Failed to seed buses:", error.message);
+  }
+}
 
 // ===============================
 // ALERTS
@@ -140,43 +167,16 @@ app.get("/api/health", (req, res) => {
 // GET ALL BUSES
 // ===============================
 
-app.get("/api/buses", (req, res) => {
-
-  const liveBuses = buses.map((bus) => {
-
-    // Simulate changing occupancy
-    const randomOccupancy =
-      bus.occupancy +
-      Math.floor(Math.random() * 5) -
-      2;
-
-    // Simulate changing ETA
-    const randomEta =
-      bus.eta +
-      Math.floor(Math.random() * 3) -
-      1;
-
-    return {
-
-      ...bus,
-
-      occupancy: Math.min(
-        bus.capacity,
-        Math.max(0, randomOccupancy)
-      ),
-
-      eta: Math.max(
-        1,
-        randomEta
-      )
-
-    };
-
-  });
-
-  res.json(liveBuses);
-
+app.get("/api/buses", async (req, res) => {
+  try {
+    const liveBuses = await Bus.find().lean();
+    res.json(liveBuses);
+  } catch (error) {
+    console.error("Failed to fetch buses:", error.message);
+    res.status(500).json({ message: "Failed to fetch buses" });
+  }
 });
+      
 
 
 // ===============================
