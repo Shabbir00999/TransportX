@@ -8,7 +8,7 @@ const Bus = require("./bus");
 
 const app = express();
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI)
