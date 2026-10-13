@@ -49,8 +49,16 @@ input:focus-visible {
 }
 
 .app-shell {
+
+  display: flex;
+  align-items: flex-start;
+  position: relative;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
+
+
 
 .sidebar {
   width: 254px;
@@ -270,10 +278,25 @@ input:focus-visible {
   color: #8190a8;
 }
 
+
+
 .main-content {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex: 1;
+  min-width: 0;
   min-height: 100vh;
-  margin-left: 254px;
+  margin: 0 0 0 254px;
+  padding: 0;
+  top: 0;
+  transform: none;
 }
+
+
+
+
+
 
 .topbar {
   height: 76px;
@@ -285,6 +308,7 @@ input:focus-visible {
   justify-content: space-between;
   gap: 16px;
   padding: 0 38px;
+  margin-top: -400px;
   background: #ffffffed;
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
@@ -1300,10 +1324,7 @@ input:focus-visible {
     flex: 1;
   }
 
-  .main-content {
-    margin-left: 0;
-  }
-
+  
   .mobile-backdrop {
   display: block;
   position: fixed;
@@ -1475,19 +1496,143 @@ input:focus-visible {
 
 /* Keep sidebar and its backdrop above the Leaflet map */
 
-.sidebar {
+/* Keep sidebar above the Leaflet map */
+
+/* Final layout reset */
+
+/* TransportX final layout fix */
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+.app-shell {
+  display: flex;
+  align-items: flex-start;
   position: relative;
-  z-index: 10000;
-  height: 100vh;
-  overflow-y: auto;
-  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-
-.mobile-backdrop {
+.app-shell > .sidebar {
   position: fixed;
-  inset: 0;
-  z-index: 9999 !important;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 254px;
+  height: 100vh;
+  margin: 0;
+  z-index: 10000;
 }
 
 
+.topbar {
+  margin-top: 0;
+  top: 0;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1 !important;
+}
+
+@media (max-width: 900px) {
+  .app-shell > .sidebar {
+    width: 280px;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+  }
+
+  .app-shell > .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  
+
+/* Final fix for TransportX dashboard vertical shift */
+.app-shell > .sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 254px;
+  height: 100vh;
+  margin: 0 !important;
+  z-index: 10000 !important;
+}
+
+
+
+@edia (max-width: 900px) {
+  .app-shell > .main-content {
+    margin-left: 0;
+  }
+}m
+
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+
+.topbar {
+  position: relative;
+  top: 0;
+  margin-top: 0;
+}
+
+.page-content {
+  margin-top: 0;
+}
+
+
+/* TransportX: fix dashboard vertical shift */
+html,
+body,
+#root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: flex !important;
+  align-items: flex-start !important;
+  min-height: 100vh;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+
+.topbar {
+  margin-top: 0 !important;
+  top: 0 !important;
+}
