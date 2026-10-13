@@ -120,6 +120,8 @@ const response = await fetch(`${API}/buses`);
         style={{
           height: "500px",
           width: "100%",
+          position:"relative",
+          zIndeex:0,
           borderRadius: "12px",
           overflow: "hidden",
           marginTop: "20px",
