@@ -43,7 +43,7 @@ export default function LiveTracking()
   // Fetch bus data from the backend
   async function loadBuses() {
     try {
-      const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+      const API = import.meta.env.VITE_API_URL || "https://transportx-1cu1.onrender.com/api";
 const response = await fetch(`${API}/buses`);
 
       if (!response.ok) {

@@ -26,8 +26,7 @@ import {
   X,
 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
+const API = "https://transportx-1cu1.onrender.com/api";
 export default function App() {
   const [buses, setBuses] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -40,6 +39,33 @@ export default function App() {
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+
+const [profileName, setProfileName] = useState(
+  () => localStorage.getItem("transportx-profile-name") || "Transport Admin"
+);
+
+const [profileEmail, setProfileEmail] = useState(
+  () => localStorage.getItem("transportx-profile-email") || "admin@transportx.local"
+);
+
+const [profileSaved, setProfileSaved] = useState(false);
+
+function saveProfile(event) {
+  event.preventDefault();
+
+  localStorage.setItem(
+    "transportx-profile-name",
+    profileName.trim() || "Transport Admin"
+  );
+
+  localStorage.setItem(
+    "transportx-profile-email",
+    profileEmail.trim()
+  );
+
+  setProfileSaved(true);
+}
+
 
   async function loadDashboard() {
     try {
@@ -641,27 +667,83 @@ function navigateTo(page) {
             </section>
           )}
 
-          {activePage === "Account Portal" && (
-            <section className="standalone-page" style={{ display: "grid", gap: 18 }}>
-              <div>
-                <div className="section-kicker">PROFILE & SETTINGS</div>
-                <h2 style={{ margin: "8px 0" }}>Account Portal</h2>
-                <p style={{ color: "#64748b", margin: 0 }}>Your current demo account information.</p>
-              </div>
-              <div className="panel" style={{ padding: 24, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                <div className="profile-avatar" style={{ width: 58, height: 58, display: "grid", placeItems: "center", fontSize: 22 }}>A</div>
-                <div>
-                  <h3 style={{ margin: "0 0 5px" }}>Transport Admin</h3>
-                  <p style={{ margin: 0, color: "#64748b" }}>Role: Administrator · Account type: Demo</p>
-                </div>
-              </div>
-              <div className="panel" style={{ padding: 22 }}>
-                <h3 style={{ marginTop: 0 }}>Account settings</h3>
-                <p style={{ color: "#64748b" }}>Sign-in, password changes, and persistent profile editing are not connected yet. This page is a front-end demo and does not change login credentials.</p>
-                <button className="filter-button" onClick={() => navigateTo("Overview")}>Return to Overview</button>
-              </div>
-            </section>
-          )}
+          
+{activePage === "Account Portal" && (
+  <section className="standalone-page" style={{ display: "grid", gap: 18 }}>
+    <div>
+      <div className="section-kicker">PROFILE & SETTINGS</div>
+      <h2 style={{ margin: "8px 0" }}>Account Portal</h2>
+      <p style={{ color: "#64748b", margin: 0 }}>
+        Manage your administrator profile.
+      </p>
+    </div>
+
+    <div className="panel" style={{ padding: 24 }}>
+      <h3>Administrator profile</h3>
+      <p style={{ color: "#64748b" }}>
+        {profileName} · {profileEmail}
+      </p>
+    </div>
+
+    <form
+      className="panel"
+      onSubmit={saveProfile}
+      style={{ padding: 22, display: "grid", gap: 16 }}
+    >
+      <h3 style={{ margin: 0 }}>Account settings</h3>
+
+      <label style={{ display: "grid", gap: 7 }}>
+        Display name
+        <input
+          value={profileName}
+          onChange={(event) => {
+            setProfileName(event.target.value);
+            setProfileSaved(false);
+          }}
+          required
+          maxLength={60}
+        />
+      </label>
+
+      <label style={{ display: "grid", gap: 7 }}>
+        Email address
+        <input
+          type="email"
+          value={profileEmail}
+          onChange={(event) => {
+            setProfileEmail(event.target.value);
+            setProfileSaved(false);
+          }}
+          required
+        />
+      </label>
+
+      <button type="submit" className="filter-button">
+        Save changes
+      </button>
+
+      {profileSaved && (
+        <p role="status" style={{ color: "green" }}>
+          Profile saved successfully!
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="filter-button"
+        onClick={() => navigateTo("Overview")}
+      >
+        Return to Overview
+      </button>
+
+      <p style={{ color: "#64748b", fontSize: 13 }}>
+        Changes are saved in this browser only. This demo does not change
+        login credentials or passwords.
+      </p>
+    </form>
+  </section>
+)}
+
 
           <footer className="page-footer" style={{ display: activePage === "Overview" ? undefined : "none" }}>
             <div className="footer-brand">
