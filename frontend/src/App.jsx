@@ -157,16 +157,10 @@ function navigateTo(page) {
 
 
   return (
-    <div className="app-shell">
-      {mobileMenu && (
-        <button
-          className="mobile-backdrop"
-          aria-label="Close menu"
-          onClick={() => setMobileMenu(false)}
-        />
-      )}
+    
+<div className="app-shell">
+  <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
 
-      <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
         <div className="brand">
           <div className="brand-mark">
             <Bus size={25} />
@@ -238,6 +232,18 @@ function navigateTo(page) {
           <Settings size={18} className="muted-icon" />
         </div>
       </aside>
+      
+  
+  {mobileMenu && (
+    <button
+      className="mobile-backdrop"
+      aria-label="Close menu"
+      onClick={() => setMobileMenu(false)}
+    />
+  )}
+
+  
+
 
       <main className="main-content">
         <header className="topbar">
