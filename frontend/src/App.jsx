@@ -33,6 +33,24 @@ export default function App() {
   const [routes, setRoutes] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedBus, setSelectedBus] = useState(null);
+  const [busFormOpen, setBusFormOpen] = useState(false);
+const [editingBus, setEditingBus] = useState(null);
+const [busForm, setBusForm] = useState({
+  id: "",
+  number: "",
+  name: "",
+  route: "",
+  driver: "",
+  occupancy: 0,
+  capacity: 50,
+  eta: 0,
+  status: "On Route",
+  lat: 17.4418,
+  lng: 78.3489
+});
+const [busActionError, setBusActionError] = useState("");
+const [busActionMessage, setBusActionMessage] = useState("");
+const [busSaving, setBusSaving] = useState(false);
   const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [activePage, setActivePage] = useState("Overview");
   const [loading, setLoading] = useState(true);
@@ -68,8 +86,176 @@ function saveProfile(event) {
 
 
   async function loadDashboard() {
+    
+<div className="panel" style={{ padding: 22 }}>
+  <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap"
+  }}>
+    <div>
+      <h3 style={{ margin: "0 0 6px" }}>Bus Management</h3>
+      <p style={{ margin: 0, color: "#64748b" }}>
+        Add, edit, or remove campus buses.
+      </p>
+    </div>
+
+    <button className="filter-button" onClick={openAddBus}>
+      + Add Bus
+    </button>
+  </div>
+
+  {busActionError && (
+    <p role="alert" style={{ color: "#dc2626" }}>
+      {busActionError}
+    </p>
+  )}
+
+  {busActionMessage && (
+    <p role="status" style={{ color: "#15803d" }}>
+      {busActionMessage}
+    </p>
+  )}
+
+  {busFormOpen && (
+    <form
+      onSubmit={saveBus}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+        gap: 12,
+        marginTop: 20
+      }}
+    >
+      {[
+        ["id", "Bus ID"],
+        ["number", "Registration number"],
+        ["name", "Bus name"],
+        ["route", "Route"],
+        ["driver", "Driver"],
+        ["occupancy", "Passengers onboard"],
+        ["capacity", "Capacity"],
+        ["eta", "ETA in minutes"],
+        ["lat", "Latitude"],
+        ["lng", "Longitude"]
+      ].map(([key, label]) => (
+        <label key={key} style={{ display: "grid", gap: 6 }}>
+          <span>{label}</span>
+          <input
+            required
+            type={
+              ["occupancy", "capacity", "eta", "lat", "lng"].includes(key)
+                ? "number"
+                : "text"
+            }
+            min={
+              ["occupancy", "eta"].includes(key) ? 0 :
+              key === "capacity" ? 1 : undefined
+            }
+            step={["lat", "lng"].includes(key) ? "any" : "1"}
+            disabled={key === "id" && Boolean(editingBus)}
+            value={busForm[key]}
+            onChange={(event) =>
+              setBusForm({
+                ...busForm,
+                [key]: event.target.value
+              })
+            }
+          />
+        </label>
+      ))}
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Status</span>
+        <select
+          value={busForm.status}
+          onChange={(event) =>
+            setBusForm({ ...busForm, status: event.target.value })
+          }
+        >
+          <option>On Route</option>
+          <option>Delayed</option>
+          <option>Stopped</option>
+          <option>High Occupancy</option>
+        </select>
+      </label>
+
+      <div style={{
+        display: "flex",
+        gap: 10,
+        alignItems: "end",
+        flexWrap: "wrap"
+      }}>
+        <button className="filter-button" type="submit" disabled={busSaving}>
+          {busSaving ? "Saving..." : editingBus ? "Save Changes" : "Add Bus"}
+        </button>
+
+        <button
+          className="filter-button"
+          type="button"
+          onClick={() => setBusFormOpen(false)}
+          disabled={busSaving}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  )}
+
+  <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
+    {buses.map((bus) => (
+      <div
+        key={bus.id}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+          padding: 14,
+          border: "1px solid #e5eaf3",
+          borderRadius: 12
+        }}
+      >
+        <div>
+          <strong>{bus.name}</strong>
+          <div style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
+            {bus.id} · {bus.number} · {bus.route}
+          </div>
+          <div style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
+            Passengers: {bus.occupancy}/{bus.capacity} · {bus.status}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className="filter-button"
+            onClick={() => openEditBus(bus)}
+          >
+            Edit
+          </button>
+
+          <button
+            className="filter-button"
+            onClick={() => deleteBus(bus)}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ))}
+
+    {!buses.length && (
+      <p style={{ color: "#64748b" }}>No buses registered yet.</p>
+    )}
+  </div>
+</div>
+
     try {
       setError("");
+
 
       const responses = await Promise.all([
         fetch(`${API}/buses`),
@@ -660,16 +846,73 @@ function navigateTo(page) {
                 <article className="stat-card"><span className="stat-label">Campus routes</span><div className="stat-value">{routes.length}</div></article>
                 <article className="stat-card"><span className="stat-label">Current alerts</span><div className="stat-value">{alerts.length}</div></article>
               </div>
-              <div className="panel" style={{ padding: 22 }}>
-                <h3 style={{ marginTop: 0 }}>Admin quick actions</h3>
-                <p style={{ color: "#64748b" }}>These controls open the existing demo data views. User management, permissions, and saved admin changes require backend features that are not currently implemented.</p>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button className="filter-button" onClick={() => navigateTo("Live Buses")}>Manage buses</button>
-                  <button className="filter-button" onClick={() => navigateTo("Routes")}>View routes</button>
-                  <button className="filter-button" onClick={() => navigateTo("Alerts")}>Review alerts</button>
-                  <button className="filter-button" onClick={loadDashboard}>Refresh system data</button>
-                </div>
-              </div>
+             
+<div className="panel" style={{ padding: 24 }}>
+  <div style={{ marginBottom: 20 }}>
+    <div className="section-kicker">ADMIN CONTROLS</div>
+    <h3 style={{ margin: "8px 0" }}>Admin Quick Actions</h3>
+    <p style={{ color: "#64748b", margin: 0 }}>
+      Manage your campus transport operations from one place.
+    </p>
+  </div>
+
+  <div className="admin-quick-actions">
+    <button className="admin-action-card" onClick={() => navigateTo("Live Buses")}>
+      <span className="admin-action-icon blue"><Bus size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Manage Buses</strong>
+        <small>View the registered fleet</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+
+    <button className="admin-action-card" onClick={() => navigateTo("Routes")}>
+      <span className="admin-action-icon purple"><Route size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Manage Routes</strong>
+        <small>View campus routes</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+
+    <button className="admin-action-card" onClick={() => navigateTo("Alerts")}>
+      <span className="admin-action-icon orange"><Bell size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Review Alerts</strong>
+        <small>Check current notifications</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+
+    <button className="admin-action-card" onClick={loadDashboard} disabled={loading}>
+      <span className="admin-action-icon green"><RefreshCw size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Refresh Data</strong>
+        <small>Update dashboard information</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+
+    <button className="admin-action-card" onClick={() => navigateTo("Live Tracking")}>
+      <span className="admin-action-icon blue"><Navigation size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Bus Management</strong>
+<small>Monitor all campus buses</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+
+    <button className="admin-action-card" onClick={() => navigateTo("Account Portal")}>
+      <span className="admin-action-icon purple"><Settings size={22} /></span>
+      <span className="admin-action-text">
+        <strong>Account Settings</strong>
+        <small>Update your admin profile</small>
+      </span>
+      <ArrowUpRight size={18} />
+    </button>
+  </div>
+</div>
+
             </section>
           )}
 

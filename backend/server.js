@@ -177,6 +177,212 @@ app.get("/api/buses", async (req, res) => {
   }
 });
       
+/* ===============================
+   ADMIN BUS MANAGEMENT API
+================================ */
+
+// ADD A BUS
+app.post("/api/buses", async (req, res) => {
+  try {
+    const {
+      id,
+      number,
+      name,
+      route,
+      driver,
+      occupancy,
+      capacity,
+      eta,
+      status,
+      lat,
+      lng
+    } = req.body;
+
+    if (!id || !number || !name || !route || !driver || !status) {
+      return res.status(400).json({
+        message: "Please provide the bus ID, number, name, route, driver and status."
+      });
+    }
+
+    const parsedCapacity = Number(capacity);
+    const parsedOccupancy = Number(occupancy ?? 0);
+    const parsedEta = Number(eta ?? 0);
+
+    if (
+      !Number.isFinite(parsedCapacity) ||
+      parsedCapacity <= 0 ||
+      !Number.isFinite(parsedOccupancy) ||
+      parsedOccupancy < 0 ||
+      parsedOccupancy > parsedCapacity ||
+      !Number.isFinite(parsedEta) ||
+      parsedEta < 0
+    ) {
+      return res.status(400).json({
+        message: "Capacity must be positive, occupancy must be between zero and capacity, and ETA cannot be negative."
+      });
+    }
+
+    const existingBus = await Bus.findOne({
+      $or: [{ id }, { number }]
+    });
+
+    if (existingBus) {
+      return res.status(409).json({
+        message: "A bus with this ID or registration number already exists."
+      });
+    }
+
+    const newBus = await Bus.create({
+      id: String(id).trim(),
+      number: String(number).trim(),
+      name: String(name).trim(),
+      route: String(route).trim(),
+      driver: String(driver).trim(),
+      occupancy: parsedOccupancy,
+      capacity: parsedCapacity,
+      eta: parsedEta,
+      status: String(status).trim(),
+      lat: Number(lat ?? 0),
+      lng: Number(lng ?? 0)
+    });
+
+    res.status(201).json({
+      message: "Bus added successfully.",
+      bus: newBus
+    });
+  } catch (error) {
+    console.error("Add bus failed:", error.message);
+    res.status(500).json({ message: "Failed to add bus." });
+  }
+});
+
+
+// EDIT A BUS
+app.put("/api/buses/:id", async (req, res) => {
+  try {
+    const allowedFields = [
+      "number",
+      "name",
+      "route",
+      "driver",
+      "occupancy",
+      "capacity",
+      "eta",
+      "status",
+      "lat",
+      "lng"
+    ];
+
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        message: "No editable bus details were provided."
+      });
+    }
+
+    for (const field of ["number", "name", "route", "driver", "status"]) {
+      if (updates[field] !== undefined) {
+        if (
+          typeof updates[field] !== "string" ||
+          !updates[field].trim()
+        ) {
+          return res.status(400).json({
+            message: `${field} must be a non-empty string.`
+          });
+        }
+
+        updates[field] = updates[field].trim();
+      }
+    }
+
+    for (const field of ["occupancy", "capacity", "eta", "lat", "lng"]) {
+      if (updates[field] !== undefined) {
+        updates[field] = Number(updates[field]);
+
+        if (!Number.isFinite(updates[field])) {
+          return res.status(400).json({
+            message: `${field} must be a valid number.`
+          });
+        }
+      }
+    }
+
+    const currentBus = await Bus.findOne({ id: req.params.id });
+
+    if (!currentBus) {
+      return res.status(404).json({ message: "Bus not found." });
+    }
+
+    const finalCapacity = updates.capacity ?? currentBus.capacity;
+    const finalOccupancy = updates.occupancy ?? currentBus.occupancy;
+    const finalEta = updates.eta ?? currentBus.eta;
+
+    if (
+      finalCapacity <= 0 ||
+      finalOccupancy < 0 ||
+      finalOccupancy > finalCapacity ||
+      finalEta < 0
+    ) {
+      return res.status(400).json({
+        message: "Check capacity, occupancy and ETA values."
+      });
+    }
+
+    if (updates.number !== undefined) {
+      const duplicate = await Bus.findOne({
+        number: updates.number,
+        id: { $ne: req.params.id }
+      });
+
+      if (duplicate) {
+        return res.status(409).json({
+          message: "Another bus already uses this registration number."
+        });
+      }
+    }
+
+    Object.assign(currentBus, updates);
+    await currentBus.save();
+
+    res.json({
+      message: "Bus updated successfully.",
+      bus: currentBus
+    });
+  } catch (error) {
+    console.error("Update bus failed:", error.message);
+    res.status(500).json({ message: "Failed to update bus." });
+  }
+});
+
+
+// DELETE A BUS
+app.delete("/api/buses/:id", async (req, res) => {
+  try {
+    const deletedBus = await Bus.findOneAndDelete({
+      id: req.params.id
+    });
+
+    if (!deletedBus) {
+      return res.status(404).json({ message: "Bus not found." });
+    }
+
+    res.json({
+      message: "Bus deleted successfully.",
+      id: deletedBus.id
+    });
+  } catch (error) {
+    console.error("Delete bus failed:", error.message);
+    res.status(500).json({ message: "Failed to delete bus." });
+  }
+});
+
 
 
 // ===============================
